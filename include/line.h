@@ -2,6 +2,7 @@
 #define _LINE_H_
 
 #include <stddef.h>
+#define INVALID -2
 #define BUFFER_LENGTH 10
 
 typedef struct line
@@ -9,6 +10,7 @@ typedef struct line
     char *buffer;
     int gap_length;       // current gap length
     size_t buffer_length; // current buffer length
+    int string_length;    // the content length, include EOF, '\n' and INVALID
     int cursor_pos;       // the current position of the gap
 } Line;
 
@@ -43,6 +45,13 @@ void move_left_at(Line *line, const int postion);
 void move_right_at(Line *line, const int postion);
 
 /**
+ * Move the gap to the position of the buffer
+ * @param line line
+ * @param position the position you want to move to
+ */
+void move_to(Line *line, const int position);
+
+/**
  * Grow the gap buffer from the current cursor positon
  * @param line line
  */
@@ -74,5 +83,7 @@ void delete_char(Line *line);
  * @param position the position of character to be deleted
  */
 void delete_char_at(Line *line, int position);
+
+int is_valid(Line *line, int position);
 
 #endif

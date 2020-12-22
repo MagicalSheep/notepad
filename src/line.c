@@ -16,17 +16,18 @@
 
 void init_line(Line *line)
 {
-    (*line).buffer = (char *)calloc(BUFFER_LENGTH, sizeof(char));
-    (*line).gap_length = BUFFER_LENGTH;
-    (*line).buffer_length = BUFFER_LENGTH;
-    (*line).cursor_pos = 0;
+    line->buffer = (char *)calloc(BUFFER_LENGTH, sizeof(char));
+    line->gap_length = BUFFER_LENGTH;
+    line->buffer_length = BUFFER_LENGTH;
+    line->cursor_pos = 0;
+    line->string_length = 0;
 }
 
 void move_left(Line *line)
 {
-    (*line).cursor_pos--;
-    (*line).buffer[(*line).cursor_pos + (*line).gap_length] = (*line).buffer[(*line).cursor_pos];
-    (*line).buffer[(*line).cursor_pos] = 0;
+    line->cursor_pos--;
+    line->buffer[line->cursor_pos + line->gap_length] = line->buffer[line->cursor_pos];
+    line->buffer[line->cursor_pos] = 0;
 }
 
 void move_right(Line *line)
@@ -38,14 +39,22 @@ void move_right(Line *line)
 
 void move_left_at(Line *line, const int postion)
 {
-    while (postion < (*line).cursor_pos)
+    while (postion < line->cursor_pos)
         move_left(line);
 }
 
 void move_right_at(Line *line, const int postion)
 {
-    while (postion > (*line).cursor_pos)
+    while (postion > line->cursor_pos)
         move_right(line);
+}
+
+void move_to(Line *line, const int position)
+{
+    if (line->cursor_pos - position >= 0)
+        move_left_at(line, position);
+    else
+        move_right_at(line, position);
 }
 
 void grow(Line *line)
@@ -74,11 +83,12 @@ void grow(Line *line)
 
 void insert_char(Line *line, const char ch)
 {
-    if ((*line).gap_length == 0)
+    if (line->gap_length == 0)
         grow(line);
-    (*line).buffer[(*line).cursor_pos] = ch;
-    (*line).cursor_pos++;
-    (*line).gap_length--;
+    line->buffer[line->cursor_pos] = ch;
+    line->cursor_pos++;
+    line->gap_length--;
+    line->string_length++;
 }
 
 void insert_str(Line *line, const char *str)
@@ -92,6 +102,7 @@ void delete_char(Line *line)
     (*line).cursor_pos--;
     (*line).buffer[(*line).cursor_pos] = 0;
     (*line).gap_length++;
+    (*line).string_length--;
 }
 
 void delete_char_at(Line *line, int position)
@@ -101,4 +112,19 @@ void delete_char_at(Line *line, int position)
     else
         move_right_at(line, position + 1);
     delete_char(line);
+}
+
+int is_valid(Line *line, int position)
+{
+    if (position < 0 || position > line->string_length)
+        return 0;
+    if (position < line->cursor_pos)
+    {
+        return line->buffer[position] != INVALID;
+    }
+    else
+    {
+        int pos = line->gap_length + position;
+        return line->buffer[pos] != INVALID;
+    }
 }

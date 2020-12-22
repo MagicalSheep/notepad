@@ -1,10 +1,9 @@
 #include <console.h>
-// #include <text.h>
-// #include <curses.h>
-// #include <stdlib.h>
+#include <page.h>
 
 int main(int argc, char *argv[])
 {
+    init_page("untitled.txt");
     init();
     // printw("Press Delete and its corresponding keycode will be printed!");
     // int ch;
@@ -12,6 +11,5 @@ int main(int argc, char *argv[])
     // {
     //     printw("%d\n",ch);
     // }
-    open_editor();
     return 0;
 }
