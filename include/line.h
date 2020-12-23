@@ -2,6 +2,11 @@
 #define _LINE_H_
 
 #include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define NEWLINE -3
 #define INVALID -2
 #define BUFFER_LENGTH 10
 
@@ -85,5 +90,9 @@ void delete_char(Line *line);
 void delete_char_at(Line *line, int position);
 
 int is_valid(Line *line, int position);
+
+void remove_invalid(Line *line);
+
+void add_invalid(Line *line);
 
 #endif

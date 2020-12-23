@@ -8,39 +8,50 @@
  *  Page is an instance of the document.
  * History: 
  *  2020/12/21  MagicalSheep    Init the file.
+ *  2020/12/23  MagicalSheep    Beautify the codes.
 *************************************************/
 
 #include <page.h>
-#include <stdlib.h>
-#include <string.h>
 
 Page page;
 Line line;
 
-void init_page(const char *name)
+void init_page(const char *name, int cols, int lines)
 {
     init_line(&line);
+    insert_char(&line, NEWLINE);
+    for (int i = 1; i < cols; i++)
+        insert_char(&line, INVALID);
+    move_to(&line, 0);
     strcpy(page.doc_name, name);
     page.line_num = 1;
     page.text = &line;
+    page.cols = cols;
+    page.lines = lines;
 }
 
-Page *get_page()
+inline Page *get_page()
 {
     return &page;
 }
 
-Line *get_line()
+inline Line *get_line()
 {
     return &line;
 }
 
-void add_line()
+inline void add_line()
 {
     page.line_num++;
 }
 
-void set_docname(const char *name)
+inline void set_docname(const char *name)
 {
     strcpy(page.doc_name, name);
+}
+
+inline int get_pos(int offset, int y, int x)
+{
+    // y begin at position 1
+    return (y - 1 + offset) * page.cols + x;
 }

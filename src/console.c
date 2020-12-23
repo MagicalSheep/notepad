@@ -10,6 +10,7 @@
  * History: 
  *  2020/12/20  MagicalSheep    Init the file.
  *  2020/12/21  MagicalSheep    Add multiple funtion area.
+ *  2020/12/23  MagicalSheep    Beautify the codes.
 *************************************************/
 
 #include <console.h>
@@ -17,7 +18,16 @@
 int x = 0, y = 1; // position of the cursor, y->row, x->col
 int offset;       // current y offset to the document head line
 
-void print(Line *line);
+void debug_print(Line *line);
+
+void print_page();
+void mv_return();
+void mv_backspace();
+void mv_insert(char ch);
+int mv_up();
+int mv_down();
+void mv_left();
+void mv_right();
 
 void init_head_area(Page *page)
 {
@@ -55,39 +65,10 @@ void init_editor(Page *page)
         switch (operate)
         {
         case '\r': // return
-            // insert_char(cur_line, EOF);
-            // char *content = (char *)calloc(cur_line->buffer_length, sizeof(char));
-            // get_back_content(cur_line, content);
-            // clear_back_content(cur_line);
-            // line_num++;
-            // add_line(page, line_num, content);
-            // mv_down(page);
-            // move(y, 0);
+            mv_return();
             break;
         case '\b': // backspace
-            if (offset == 0 && x == 0 && y == 1)
-                // head can't be deleted
-                break;
-            // logical delete
-            delete_char(get_line());
-            // physical delete
-            if (x == 0)
-            {
-                if (y == 1)
-                {
-                    offset--;
-                    move(y, COLS - 1);
-                }
-                else
-                {
-                    move(y - 1, COLS - 1);
-                }
-            }
-            else
-            {
-                move(y, x - 1);
-            }
-            print_page();
+            mv_backspace();
             break;
         case KEY_LEFT:
             mv_left();
@@ -102,38 +83,33 @@ void init_editor(Page *page)
             mv_down();
             break;
         default:
-            // logical insert
-            insert_char(get_line(), operate);
-            // physical insert
-            if (x == COLS - 1)
-            {
-                if (y == LINES - 2)
-                {
-                    offset++;
-                    move(y, 0);
-                    clrtoeol();
-                }
-                else
-                {
-                    move(y + 1, 0);
-                }
-                getyx(stdscr, y, x);
-            }
-            else
-            {
-                move(y, x + 1);
-            }
-            print_page();
+            mv_insert(operate);
             break;
         }
         getyx(stdscr, y, x);
-        // print(get_line());
+        debug_print(get_line());
         refresh();
     }
 }
 
-void print_page()
+void init(const char *name)
 {
+    initscr();
+    raw();
+    noecho();
+    keypad(stdscr, TRUE);
+
+    init_page(name, COLS, LINES);
+
+    init_head_area(get_page());
+    init_command_area();
+    init_editor(get_page());
+    refresh();
+}
+
+inline void print_page()
+{
+    return;
     int old_x, old_y;
     getyx(stdscr, old_y, old_x);
     clear();
@@ -141,7 +117,7 @@ void print_page()
     init_command_area();
     move(1, 0);
     Line *line = get_line();
-    for (int i = offset * COLS; i < line->string_length + line->gap_length; i++)
+    for (int i = offset * COLS; i < line->buffer_length; i++)
     {
         if (getcury(stdscr) == LINES - 1)
             break;
@@ -149,17 +125,100 @@ void print_page()
             continue;
         if (line->buffer[i] == EOF)
             break;
-        addch(line->buffer[i]);
+        if (line->buffer[i] == NEWLINE)
+        {
+            printw("\n");
+            continue;
+        }
+        printw("%c", line->buffer[i]);
     }
     move(old_y, old_x);
 }
 
-int mv_up()
+inline void mv_return()
+{
+    // logical new line
+    insert_char(get_line(), NEWLINE);
+    get_page()->line_num++;
+    for (int i = get_line()->cursor_pos; i <= (y + offset) * COLS - 1; i++)
+        insert_char(get_line(), INVALID);
+    // physical new line
+    if (y == LINES - 2)
+        move(y, 0);
+    else
+        move(y + 1, 0);
+    print_page();
+}
+
+inline void mv_backspace()
+{
+    if (offset == 0 && x == 0 && y == 1)
+        // head can't be deleted
+        return;
+    // logical delete
+    if (x == 0)
+    {
+    }
+    delete_char(get_line());
+    add_invalid(get_line());
+    // physical delete
+    if (x == 0)
+    {
+        if (y == 1)
+        {
+            offset--;
+            move(y, COLS - 1);
+        }
+        else
+        {
+            move(y - 1, COLS - 1);
+        }
+    }
+    else
+    {
+        move(y, x - 1);
+    }
+    print_page();
+}
+
+inline void mv_insert(char ch)
+{
+    // logical insert
+    insert_char(get_line(), ch);
+    // physical insert
+    if (x == COLS - 1)
+    {
+        if (y == LINES - 2)
+        {
+            offset++;
+            move(y, 0);
+            clrtoeol();
+        }
+        else
+        {
+            move(y + 1, 0);
+        }
+        getyx(stdscr, y, x);
+        // INVALID flag update
+        int tmp_pos = get_line()->cursor_pos;
+        move_right(get_line()); // cross NEWLINE flag
+        for (int i = tmp_pos; i <= (y + offset) * COLS - 1; i++)
+            insert_char(get_line(), INVALID);
+        move_to(get_line(), tmp_pos);
+    }
+    else
+    {
+        move(y, x + 1);
+    }
+    print_page();
+}
+
+inline int mv_up()
 {
     if (offset == 0 && y == 1)
         return 0;
     // move logical cursor
-    int pos = ((y - 1) + offset) * COLS + x - COLS;
+    int pos = get_pos(offset, y, x) - COLS;
     if (is_valid(get_line(), pos))
     {
         move_to(get_line(), pos);
@@ -208,9 +267,9 @@ int mv_up()
     return 0;
 }
 
-int mv_down()
+inline int mv_down()
 {
-    int pos = ((y - 1) + offset) * COLS + x + COLS;
+    int pos = get_pos(offset, y, x) + COLS;
     // move logical cursor
     if (is_valid(get_line(), pos))
     {
@@ -260,9 +319,9 @@ int mv_down()
     return 0;
 }
 
-void mv_left()
+inline void mv_left()
 {
-    int pos = ((y - 1) + offset) * COLS + x - 1; // the position to move to
+    int pos = get_pos(offset, y, x) - 1; // the position to move to
     // move logical cursor
     if (is_valid(get_line(), pos))
     {
@@ -288,13 +347,33 @@ void mv_left()
     }
     else
     {
-        mv_up(); // temp; both logical and physical cursor move
+        if (y == 1 && x == 0)
+        {
+            if (offset != 0)
+                mv_up(); // temp; both logical and physical cursor move
+        }
+        else
+        {
+            int begin = (y - 1 + offset) * COLS - 1;
+            int end = (y - 2 + offset) * COLS;
+            for (int i = begin; i >= end; i--)
+            {
+                if (is_valid(get_line(), i))
+                {
+                    // logical cursor move
+                    move_to(get_line(), i);
+                    // physical cursor move
+                    move(y - 1, i - end);
+                    break;
+                }
+            }
+        }
     }
 }
 
-void mv_right()
+inline void mv_right()
 {
-    int pos = ((y - 1) + offset) * COLS + x + 1; // the position to move to
+    int pos = get_pos(offset, y, x) + 1; // the position to move to
     // move logical cursor
     if (is_valid(get_line(), pos))
     {
@@ -320,54 +399,63 @@ void mv_right()
     }
     else
     {
-        mv_down(); // both logical and physical cursor move
+        mv_down(); // temp
+        // for (int i = get_line()->cursor_pos; i < get_line()->string_length; i++)
+        // {
+        //     if (is_valid(get_line(), i))
+        //     {
+        //         // logical cursor move
+        //         move_to(get_line(), i);
+        //         // physical cursor move
+        //         int pos = get_line()->cursor_pos - (y - 1 + offset) * COLS;
+        //         if (y == LINES - 2)
+        //         {
+        //             offset++;
+        //             move(y, pos);
+        //         }
+        //         else
+        //         {
+        //             move(y + 1, pos);
+        //         }
+        //         break;
+        //     }
+        // }
     }
 }
 
-void print(Line *line)
+inline void debug_print(Line *line)
 {
     int old_x, old_y;
     getyx(stdscr, old_y, old_x);
-    move(15, 0);
+    clear();
+    move(26, 0);
     clrtoeol();
     printw("x = %d, y = %d, pos = %d, strlen = %d\n", old_x, old_y, line->cursor_pos, line->string_length);
     clrtoeol();
     printw("COLS = %d, LINES = %d, LEFT_POS = %d, RIGHT_POS = %d", COLS, LINES, ((y - 1) + offset) * COLS + x - 1, ((y - 1) + offset) * COLS + x + 1);
-    // for (int i = 0; i < line->buffer_length; i++)
-    // {
-    //     if (line->buffer[i] == 0)
-    //     {
-    //         attron(A_BOLD);
-    //         printw("%d ", 0);
-    //         attroff(A_BOLD);
-    //     }
-    //     else
-    //     {
-    //         printw("%d ", line->buffer[i]);
-    //     }
-    //     // if (i == line->cursor_pos - 1 || i == line->cursor_pos + line->gap_length)
-    //     // {
-    //     //     attron(A_BOLD);
-    //     //     printw("%c", line->buffer[i]);
-    //     //     attroff(A_BOLD);
-    //     // }
-    //     // else if (!(i >= line->cursor_pos && i < line->cursor_pos + line->gap_length))
-    //     // {
-    //     //     printw("%c", line->buffer[i]);
-    //     // }
-    // }
+    move(1, 0);
+    for (int i = 0; i < line->buffer_length; i++)
+    {
+        if (line->buffer[i] == 0)
+        {
+            attron(A_BOLD);
+            printw("%d ", 0);
+            attroff(A_BOLD);
+        }
+        else
+        {
+            printw("%d ", line->buffer[i]);
+        }
+        // if (i == line->cursor_pos - 1 || i == line->cursor_pos + line->gap_length)
+        // {
+        //     attron(A_BOLD);
+        //     printw("%c", line->buffer[i]);
+        //     attroff(A_BOLD);
+        // }
+        // else if (!(i >= line->cursor_pos && i < line->cursor_pos + line->gap_length))
+        // {
+        //     printw("%c", line->buffer[i]);
+        // }
+    }
     move(old_y, old_x);
-}
-
-void init()
-{
-    initscr();
-    raw();
-    noecho();
-    keypad(stdscr, TRUE);
-
-    init_head_area(get_page());
-    init_command_area();
-    init_editor(get_page());
-    refresh();
 }

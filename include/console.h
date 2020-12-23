@@ -11,24 +11,8 @@
 
 /**
  * Init console
- * @param page Page to be loaded
+ * @param name document name
  */
-void init();
-
-void init_editor(Page *page);
-
-void print_page();
-
-int mv_up();
-
-int mv_down();
-
-void mv_left();
-
-void mv_right();
-
-void init_head_area(Page *page);
-
-void init_command_area();
+void init(const char *name);
 
 #endif
