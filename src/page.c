@@ -25,7 +25,6 @@ void init_page(const char *name, int cols, int lines)
         insert_char(&line, INVALID);
     move_to(&line, 1);
     strcpy(page.doc_name, name);
-    page.line_num = 1;
     page.text = &line;
     page.cols = cols;
     page.lines = lines;

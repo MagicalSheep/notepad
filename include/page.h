@@ -11,7 +11,6 @@ typedef struct page
 {
     char doc_name[MAX_DOC_NAME_LENGTH];
     Line *text;
-    int line_num;
     int cols;
     int lines;
 } Page;
