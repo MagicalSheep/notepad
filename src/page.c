@@ -9,6 +9,7 @@
  * History: 
  *  2020/12/21  MagicalSheep    Init the file.
  *  2020/12/23  MagicalSheep    Beautify the codes.
+ *  2020/12/23  MagicalSheep    Offer traslation between logic and physic. 
 *************************************************/
 
 #include <page.h>
@@ -22,7 +23,7 @@ void init_page(const char *name, int cols, int lines)
     insert_char(&line, NEWLINE);
     for (int i = 1; i < cols; i++)
         insert_char(&line, INVALID);
-    move_to(&line, 0);
+    move_to(&line, 1);
     strcpy(page.doc_name, name);
     page.line_num = 1;
     page.text = &line;
@@ -40,11 +41,6 @@ inline Line *get_line()
     return &line;
 }
 
-inline void add_line()
-{
-    page.line_num++;
-}
-
 inline void set_docname(const char *name)
 {
     strcpy(page.doc_name, name);
@@ -53,5 +49,12 @@ inline void set_docname(const char *name)
 inline int get_pos(int offset, int y, int x)
 {
     // y begin at position 1
-    return (y - 1 + offset) * page.cols + x;
+    return (y - 1 + offset) * page.cols + x + 1;
+}
+
+void get_cursor_pos(int offset, int pos, int *y, int *x)
+{
+    // y begin at position 1
+    *y = pos / page.cols + 1 - offset;
+    *x = pos - (*y - 1 + offset) * page.cols;
 }

@@ -10,6 +10,8 @@
  *  2020/12/20  MagicalSheep    Init the file.
  *  2020/12/23  MagicalSheep    Fix bugs.
  *  2020/12/23  MagicalSheep    Beautify the codes.
+ *  2020/12/23  MagicalSheep    Define the concept of position.
+ *  2020/12/23  MagicalSheep    Rebuild the line control function.
 *************************************************/
 
 #include <line.h>
@@ -39,13 +41,13 @@ void move_right(Line *line)
 
 void move_left_at(Line *line, const int postion)
 {
-    while (postion < line->cursor_pos)
+    while (postion <= line->cursor_pos)
         move_left(line);
 }
 
 void move_right_at(Line *line, const int postion)
 {
-    while (postion > line->cursor_pos)
+    while (postion - 1 > line->cursor_pos)
         move_right(line);
 }
 
@@ -93,6 +95,7 @@ void insert_str(Line *line, const char *str)
 
 void delete_char(Line *line)
 {
+    move_right(line);
     line->cursor_pos--;
     line->buffer[line->cursor_pos] = 0;
     line->gap_length++;
@@ -107,30 +110,22 @@ void delete_char_at(Line *line, int position)
 
 int is_valid(Line *line, int position)
 {
-    if (position < 0 || position > line->string_length)
+    if (position <= 0 || position > line->string_length)
         return 0;
-    if (position < line->cursor_pos)
-    {
-        return line->buffer[position] != INVALID;
-    }
-    else
-    {
-        int pos = line->gap_length + position;
-        return line->buffer[pos] != INVALID;
-    }
+    int b_p = cpos_to_bpos(line, position);
+    return line->buffer[b_p] != INVALID;
 }
 
 void remove_invalid(Line *line)
 {
-    int pos = line->cursor_pos;
+    int pos = bpos_to_cpos(line, line->cursor_pos);
     for (int i = line->cursor_pos; i < line->buffer_length; i++)
     {
         if (line->buffer[i] == NEWLINE)
         {
+            int c_p = bpos_to_cpos(line, i + 1);
             if (i + 1 < line->buffer_length && line->buffer[i + 1] == INVALID)
-            {
-                delete_char_at(line, i - line->gap_length + 2);
-            }
+                delete_char_at(line, c_p);
             break;
         }
     }
@@ -139,18 +134,36 @@ void remove_invalid(Line *line)
 
 void add_invalid(Line *line)
 {
-    int pos = line->cursor_pos;
+    int pos = bpos_to_cpos(line, line->cursor_pos);
     for (int i = line->cursor_pos; i < line->buffer_length; i++)
     {
         if (line->buffer[i] == NEWLINE)
         {
+            int c_p = bpos_to_cpos(line, i + 1);
             if (i + 1 < line->buffer_length && line->buffer[i + 1] == INVALID)
             {
-                move_to(line, i + 1);
+                move_to(line, c_p);
                 insert_char(line, INVALID);
             }
             break;
         }
     }
     move_to(line, pos);
+}
+
+int bpos_to_cpos(Line *line, int bpos)
+{
+    if (bpos <= line->cursor_pos)
+        return bpos + 1;
+    else
+        return bpos - line->gap_length + 1;
+}
+
+int cpos_to_bpos(Line *line, int cpos)
+{
+    int t_p = bpos_to_cpos(line, line->cursor_pos);
+    if (cpos < t_p)
+        return cpos - 1;
+    else
+        return line->cursor_pos + line->gap_length + cpos - t_p;
 }

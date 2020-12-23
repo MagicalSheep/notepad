@@ -11,6 +11,7 @@
  *  2020/12/20  MagicalSheep    Init the file.
  *  2020/12/21  MagicalSheep    Add multiple funtion area.
  *  2020/12/23  MagicalSheep    Beautify the codes.
+ *  2020/12/23  MagicalSheep    Rebuild the control function.
 *************************************************/
 
 #include <console.h>
@@ -56,7 +57,7 @@ void init_command_area()
 void init_editor(Page *page)
 {
     offset = 0;
-    move_to(get_line(), 0);
+    move_to(get_line(), 1); // move to the front of the first character(NEWLINE flag)
     move(1, 0);
     int operate;
     while (1)
@@ -87,7 +88,7 @@ void init_editor(Page *page)
             break;
         }
         getyx(stdscr, y, x);
-        debug_print(get_line());
+        // debug_print(get_line());
         refresh();
     }
 }
@@ -109,7 +110,7 @@ void init(const char *name)
 
 inline void print_page()
 {
-    return;
+    // return;
     int old_x, old_y;
     getyx(stdscr, old_y, old_x);
     clear();
@@ -138,15 +139,25 @@ inline void print_page()
 inline void mv_return()
 {
     // logical new line
+    int cnt = get_pos(offset, y, x) - get_pos(offset, y, 0);
     insert_char(get_line(), NEWLINE);
     get_page()->line_num++;
-    for (int i = get_line()->cursor_pos; i <= (y + offset) * COLS - 1; i++)
+    int begin = bpos_to_cpos(get_line(), get_line()->cursor_pos);
+    int end = get_pos(offset, y, COLS - 1);
+    for (int i = begin; i <= end; i++)
         insert_char(get_line(), INVALID);
+    for (int i = 1; i <= cnt; i++)
+        add_invalid(get_line());
     // physical new line
     if (y == LINES - 2)
+    {
+        offset++;
         move(y, 0);
+    }
     else
+    {
         move(y + 1, 0);
+    }
     print_page();
 }
 
@@ -156,11 +167,27 @@ inline void mv_backspace()
         // head can't be deleted
         return;
     // logical delete
-    if (x == 0)
+    for (int i = get_pos(offset, y, x) - 1; i > 0; i--)
     {
+        int flag = is_valid(get_line(), i);
+        delete_char_at(get_line(), i);
+        add_invalid(get_line());
+        if (flag)
+            break;
     }
-    delete_char(get_line());
-    add_invalid(get_line());
+    int pos = bpos_to_cpos(get_line(), get_line()->cursor_pos);
+    int t_y = 0, t_x = 0;
+    get_cursor_pos(offset, get_line()->cursor_pos, &t_y, &t_x);
+    int t_pos = get_pos(offset, t_y, COLS - 1);
+    int t_len = get_line()->string_length;
+    for (int i = t_pos + 1; i <= t_len; i++)
+    {
+        if (!is_valid(get_line(), i))
+            delete_char_at(get_line(), i);
+        else
+            break;
+    }
+    move_to(get_line(), pos);
     // physical delete
     if (x == 0)
     {
@@ -171,7 +198,7 @@ inline void mv_backspace()
         }
         else
         {
-            move(y - 1, COLS - 1);
+            move(t_y, t_x);
         }
     }
     else
@@ -199,10 +226,14 @@ inline void mv_insert(char ch)
             move(y + 1, 0);
         }
         getyx(stdscr, y, x);
-        // INVALID flag update
-        int tmp_pos = get_line()->cursor_pos;
+        // logic: INVALID flag update
+        int tmp_pos = bpos_to_cpos(get_line(), get_line()->cursor_pos);
         move_right(get_line()); // cross NEWLINE flag
-        for (int i = tmp_pos; i <= (y + offset) * COLS - 1; i++)
+        int begin = bpos_to_cpos(get_line(), get_line()->cursor_pos);
+        int t_y = 0, t_x = 0;
+        get_cursor_pos(offset, get_line()->cursor_pos, &t_y, &t_x);
+        int end = get_pos(offset, t_y, COLS - 1);
+        for (int i = begin; i <= end; i++)
             insert_char(get_line(), INVALID);
         move_to(get_line(), tmp_pos);
     }
@@ -218,7 +249,7 @@ inline int mv_up()
     if (offset == 0 && y == 1)
         return 0;
     // move logical cursor
-    int pos = get_pos(offset, y, x) - COLS;
+    int pos = get_pos(offset, y - 1, x);
     if (is_valid(get_line(), pos))
     {
         move_to(get_line(), pos);
@@ -237,14 +268,14 @@ inline int mv_up()
     else
     {
         int flag = 0;
-        int dpos = 0;
+        int t_y = 0, t_x = 0;
         for (int i = pos; i >= pos - x; i--)
         {
             if (is_valid(get_line(), i))
             {
                 move_to(get_line(), i);
                 flag = 1;
-                dpos = i;
+                get_cursor_pos(offset, get_line()->cursor_pos, &t_y, &t_x);
                 break;
             }
         }
@@ -255,11 +286,11 @@ inline int mv_up()
             {
                 offset--;
                 print_page();
-                move(y, x - (pos - dpos));
+                move(y, t_x);
             }
             else
             {
-                move(y - 1, x - (pos - dpos));
+                move(y - 1, t_x);
             }
             return 1;
         }
@@ -269,7 +300,7 @@ inline int mv_up()
 
 inline int mv_down()
 {
-    int pos = get_pos(offset, y, x) + COLS;
+    int pos = get_pos(offset, y + 1, x);
     // move logical cursor
     if (is_valid(get_line(), pos))
     {
@@ -289,14 +320,14 @@ inline int mv_down()
     else
     {
         int flag = 0;
-        int dpos = 0;
+        int t_y = 0, t_x = 0;
         for (int i = pos; i >= pos - x; i--)
         {
             if (is_valid(get_line(), i))
             {
                 move_to(get_line(), i);
                 flag = 1;
-                dpos = i - (y + offset) * COLS;
+                get_cursor_pos(offset, get_line()->cursor_pos, &t_y, &t_x);
                 break;
             }
         }
@@ -307,11 +338,11 @@ inline int mv_down()
             {
                 offset++;
                 print_page();
-                move(y, dpos);
+                move(y, t_x);
             }
             else
             {
-                move(y + 1, dpos);
+                move(y + 1, t_x);
             }
             return 1;
         }
@@ -354,8 +385,10 @@ inline void mv_left()
         }
         else
         {
-            int begin = (y - 1 + offset) * COLS - 1;
-            int end = (y - 2 + offset) * COLS;
+            int begin = get_pos(offset, y, x) - 1;
+            int end = get_pos(offset, y - 1, 0);
+            // int begin = (y - 1 + offset) * COLS - 1;
+            // int end = (y - 2 + offset) * COLS;
             for (int i = begin; i >= end; i--)
             {
                 if (is_valid(get_line(), i))
@@ -363,7 +396,10 @@ inline void mv_left()
                     // logical cursor move
                     move_to(get_line(), i);
                     // physical cursor move
-                    move(y - 1, i - end);
+                    int t_y = 0, t_x = 0;
+                    get_cursor_pos(offset, get_line()->cursor_pos, &t_y, &t_x);
+                    move(t_y, t_x);
+                    // move(y - 1, i - end);
                     break;
                 }
             }
