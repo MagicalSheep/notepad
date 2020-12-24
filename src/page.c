@@ -20,7 +20,7 @@ Line line;
 void init_page(const char *name, int cols, int lines)
 {
     init_line(&line);
-    insert_char(&line, NEWLINE);
+    insert_char(&line, EOF);
     for (int i = 1; i < cols; i++)
         insert_char(&line, INVALID);
     move_to(&line, 1);

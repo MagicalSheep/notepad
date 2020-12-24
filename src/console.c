@@ -17,11 +17,40 @@
 *************************************************/
 
 #include <console.h>
+// #define _DEBUG_
 
 int x = 0, y = 1; // position of the cursor, y->row, x->col
 int offset;       // current y offset to the document head line
 
-void debug_print(Line *line);
+#if defined(_DEBUG_)
+int monitor;
+void debug_print(Line *line)
+{
+    int old_x, old_y;
+    getyx(stdscr, old_y, old_x);
+    clear();
+    move(26, 0);
+    clrtoeol();
+    printw("x = %d, y = %d, pos = %d, strlen = %d, monitor = %d\n", old_x, old_y, line->cursor_pos, line->string_length, monitor);
+    clrtoeol();
+    printw("COLS = %d, LINES = %d, LEFT_POS = %d, RIGHT_POS = %d", COLS, LINES, ((y - 1) + offset) * COLS + x - 1, ((y - 1) + offset) * COLS + x + 1);
+    move(1, 0);
+    for (int i = 0; i < line->buffer_length; i++)
+    {
+        if (line->buffer[i] == 0)
+        {
+            attron(A_BOLD);
+            printw("%d ", 0);
+            attroff(A_BOLD);
+        }
+        else
+        {
+            printw("%d ", line->buffer[i]);
+        }
+    }
+    move(old_y, old_x);
+}
+#endif
 
 void print_page();
 void mv_return();
@@ -58,10 +87,12 @@ void init_command_area()
 
 void init_editor(Page *page)
 {
-    offset = 0;
-    move_to(get_line(), 1); // move to the front of the first character(NEWLINE flag)
-    move(1, 0);
     int operate;
+
+#if defined(_DEBUG_)
+    debug_print(get_line());
+#endif
+
     while (1)
     {
         operate = getch();
@@ -69,6 +100,7 @@ void init_editor(Page *page)
         {
         case '\r': // return
             mv_return();
+            print_page();
             break;
         case '\b': // backspace
             mv_backspace();
@@ -85,17 +117,25 @@ void init_editor(Page *page)
         case KEY_DOWN:
             mv_down();
             break;
+        case 27:
+            save(get_page());
+            break;
         default:
             mv_insert(operate);
+            print_page();
             break;
         }
         getyx(stdscr, y, x);
-        // debug_print(get_line());
+
+#if defined(_DEBUG_)
+        debug_print(get_line());
+#endif
+
         refresh();
     }
 }
 
-void init(const char *name)
+void init(const char *name, const char *content)
 {
     initscr();
     raw();
@@ -103,9 +143,23 @@ void init(const char *name)
     keypad(stdscr, TRUE);
 
     init_page(name, COLS, LINES);
-
     init_head_area(get_page());
     init_command_area();
+
+    for (int i = 0; i < strlen(content); i++)
+    {
+        if (content[i] == NEWLINE)
+            mv_return();
+        else
+            mv_insert(content[i]);
+        getyx(stdscr, y, x);
+    }
+    offset = 0;
+    move_to(get_line(), 1); // move to the front of the first character(NEWLINE flag)
+    move(1, 0);
+    print_page();
+    free_read_buffer();
+
     init_editor(get_page());
     refresh();
 }
@@ -158,7 +212,6 @@ inline void mv_return()
     {
         move(y + 1, 0);
     }
-    print_page();
 }
 
 inline void mv_backspace()
@@ -232,6 +285,10 @@ inline void mv_insert(char ch)
             insert_char(get_line(), INVALID);
         move_to(get_line(), tmp_pos);
     }
+    else
+    {
+        remove_invalid(get_line());
+    }
     // physical insert
     if (x == COLS - 1)
     {
@@ -251,7 +308,6 @@ inline void mv_insert(char ch)
     {
         move(y, x + 1);
     }
-    print_page();
 }
 
 inline int mv_up()
@@ -462,41 +518,4 @@ inline void mv_right()
         if (!flag)
             move_left(get_line());
     }
-}
-
-inline void debug_print(Line *line)
-{
-    int old_x, old_y;
-    getyx(stdscr, old_y, old_x);
-    clear();
-    move(26, 0);
-    clrtoeol();
-    printw("x = %d, y = %d, pos = %d, strlen = %d\n", old_x, old_y, line->cursor_pos, line->string_length);
-    clrtoeol();
-    printw("COLS = %d, LINES = %d, LEFT_POS = %d, RIGHT_POS = %d", COLS, LINES, ((y - 1) + offset) * COLS + x - 1, ((y - 1) + offset) * COLS + x + 1);
-    move(1, 0);
-    for (int i = 0; i < line->buffer_length; i++)
-    {
-        if (line->buffer[i] == 0)
-        {
-            attron(A_BOLD);
-            printw("%d ", 0);
-            attroff(A_BOLD);
-        }
-        else
-        {
-            printw("%d ", line->buffer[i]);
-        }
-        // if (i == line->cursor_pos - 1 || i == line->cursor_pos + line->gap_length)
-        // {
-        //     attron(A_BOLD);
-        //     printw("%c", line->buffer[i]);
-        //     attroff(A_BOLD);
-        // }
-        // else if (!(i >= line->cursor_pos && i < line->cursor_pos + line->gap_length))
-        // {
-        //     printw("%c", line->buffer[i]);
-        // }
-    }
-    move(old_y, old_x);
 }

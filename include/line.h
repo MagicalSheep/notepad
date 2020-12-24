@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define NEWLINE -3
+#define NEWLINE '\n'
 #define INVALID -2
 #define BUFFER_LENGTH 10
 
