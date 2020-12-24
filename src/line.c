@@ -12,6 +12,7 @@
  *  2020/12/23  MagicalSheep    Beautify the codes.
  *  2020/12/23  MagicalSheep    Define the concept of position.
  *  2020/12/23  MagicalSheep    Rebuild the line control function.
+ *  2020/12/24  MagicalSheep    Add get NEWLINE flag function.
 *************************************************/
 
 #include <line.h>
@@ -135,20 +136,20 @@ void remove_invalid(Line *line)
 void add_invalid(Line *line)
 {
     int pos = bpos_to_cpos(line, line->cursor_pos);
-    for (int i = line->cursor_pos; i < line->buffer_length; i++)
+    int endpos = get_NEWLINE_pos(line);
+    int c_p = endpos + 1;
+    move_to(line, c_p);
+    insert_char(line, INVALID);
+    move_to(line, pos);
+}
+
+int get_NEWLINE_pos(Line *line)
+{
+    for (int i = line->cursor_pos;; i++)
     {
         if (line->buffer[i] == NEWLINE)
-        {
-            int c_p = bpos_to_cpos(line, i + 1);
-            if (i + 1 < line->buffer_length && line->buffer[i + 1] == INVALID)
-            {
-                move_to(line, c_p);
-                insert_char(line, INVALID);
-            }
-            break;
-        }
+            return bpos_to_cpos(line, i);
     }
-    move_to(line, pos);
 }
 
 int bpos_to_cpos(Line *line, int bpos)

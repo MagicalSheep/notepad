@@ -13,6 +13,7 @@
  *  2020/12/23  MagicalSheep    Beautify the codes.
  *  2020/12/23  MagicalSheep    Rebuild the control function.
  *  2020/12/24  MagicalSheep    Delete lines implementation.
+ *  2020/12/24  MagicalSheep    Edit function completed.
 *************************************************/
 
 #include <console.h>
@@ -210,7 +211,27 @@ inline void mv_backspace()
 inline void mv_insert(char ch)
 {
     // logical insert
+    int before = get_NEWLINE_pos(get_line()) - 1;
+    int t1_y = 0, t1_x = 0;
+    get_cursor_pos(offset, before, &t1_y, &t1_x);
     insert_char(get_line(), ch);
+    int after = get_NEWLINE_pos(get_line()) - 1;
+    int t2_y = 0, t2_x = 0;
+    get_cursor_pos(offset, after, &t2_y, &t2_x);
+    if (t2_y != t1_y)
+    {
+        // update the INVALID flag
+        // history remain codes, but it works well.
+        int tmp_pos = bpos_to_cpos(get_line(), get_line()->cursor_pos);
+        move_to(get_line(), after + 2);
+        int begin = bpos_to_cpos(get_line(), get_line()->cursor_pos);
+        int t_y = 0, t_x = 0;
+        get_cursor_pos(offset, get_line()->cursor_pos, &t_y, &t_x);
+        int end = get_pos(offset, t_y, COLS - 1);
+        for (int i = begin; i <= end; i++)
+            insert_char(get_line(), INVALID);
+        move_to(get_line(), tmp_pos);
+    }
     // physical insert
     if (x == COLS - 1)
     {
@@ -225,17 +246,6 @@ inline void mv_insert(char ch)
             move(y + 1, 0);
         }
         getyx(stdscr, y, x);
-        // logic: INVALID flag update
-        // TODO: bug to be fixed
-        int tmp_pos = bpos_to_cpos(get_line(), get_line()->cursor_pos);
-        move_right(get_line()); // cross NEWLINE flag
-        int begin = bpos_to_cpos(get_line(), get_line()->cursor_pos);
-        int t_y = 0, t_x = 0;
-        get_cursor_pos(offset, get_line()->cursor_pos, &t_y, &t_x);
-        int end = get_pos(offset, t_y, COLS - 1);
-        for (int i = begin; i <= end; i++)
-            insert_char(get_line(), INVALID);
-        move_to(get_line(), tmp_pos);
     }
     else
     {

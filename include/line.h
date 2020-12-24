@@ -109,6 +109,13 @@ int is_valid(Line *line, int position);
 void remove_invalid(Line *line);
 
 /**
+ * Get NEWLINE flag position(count position) from current line
+ * @param line line
+ * @return NEWLINE flag position
+ */
+int get_NEWLINE_pos(Line *line);
+
+/**
  * Add INVALID flag to the end of current line(cursor point to)
  * @param line line
  */
