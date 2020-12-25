@@ -2,8 +2,8 @@
  * File name: line.c
  * Author: MagicalSheep
  * ID: 8208201308
- * Version: 0.1.0
- * Date: 2012/12/20
+ * Version: 1.0.0
+ * Date: 2020/12/20
  * Description: 
  *  Implementation of the gap buffer.
  * History: 
@@ -13,6 +13,7 @@
  *  2020/12/23  MagicalSheep    Define the concept of position.
  *  2020/12/23  MagicalSheep    Rebuild the line control function.
  *  2020/12/24  MagicalSheep    Add get NEWLINE flag function.
+ *  2020/12/25  MagicalSheep    Add content length variable.
 *************************************************/
 
 #include <line.h>
@@ -23,6 +24,7 @@ void init_line(Line *line)
     line->gap_length = BUFFER_LENGTH;
     line->buffer_length = BUFFER_LENGTH;
     line->cursor_pos = 0;
+    line->content_length = 0;
     line->string_length = 0;
 }
 
@@ -82,6 +84,8 @@ void insert_char(Line *line, const char ch)
     line->cursor_pos++;
     line->gap_length--;
     line->string_length++;
+    if (ch != EOF && ch != NEWLINE && ch != INVALID)
+        line->content_length++;
     if (line->gap_length == 0)
         grow(line);
 }
@@ -96,6 +100,9 @@ void delete_char(Line *line)
 {
     move_right(line);
     line->cursor_pos--;
+    char ch = line->buffer[line->cursor_pos];
+    if (ch != EOF && ch != NEWLINE && ch != INVALID)
+        line->content_length--;
     line->buffer[line->cursor_pos] = 0;
     line->gap_length++;
     line->string_length--;

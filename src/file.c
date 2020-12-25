@@ -2,8 +2,8 @@
  * File name: line.c
  * Author: MagicalSheep
  * ID: 8208201308
- * Version: 0.1.0
- * Date: 2012/12/24
+ * Version: 1.0.0
+ * Date: 2020/12/24
  * Description: 
  *  File util
  * History: 
@@ -60,7 +60,7 @@ int save(Page *page)
     int length = page->text->buffer_length;
     for (int i = 0; i < length; i++)
     {
-        if(b[i] == INVALID || b[i] == 0 || b[i] == EOF)
+        if (b[i] == INVALID || b[i] == 0 || b[i] == EOF)
             continue;
         fputc(b[i], fp);
     }

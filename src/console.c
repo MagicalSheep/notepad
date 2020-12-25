@@ -2,8 +2,8 @@
  * File name: line.c
  * Author: MagicalSheep
  * ID: 8208201308
- * Version: 0.1.0
- * Date: 2012/12/20
+ * Version: 1.0.0
+ * Date: 2020/12/20
  * Description: 
  *  Main UI file
  *  include head area, editor and command area
@@ -15,6 +15,7 @@
  *  2020/12/24  MagicalSheep    Delete lines implementation.
  *  2020/12/24  MagicalSheep    Edit function completed.
  *  2020/12/25  MagicalSheep    Optimization of opening file.
+ *  2020/12/25  MagicalSheep    Add status area.
 *************************************************/
 
 #include <console.h>
@@ -76,6 +77,18 @@ void loading(double progress)
     refresh();
 }
 
+void update_status()
+{
+    int t_x, t_y;
+    getyx(stdscr, t_y, t_x);
+    move(LINES - 1, 0);
+    clrtoeol();
+    attron(A_REVERSE);
+    printw("LINE = %d, COL = %d, offset = %d, length = %d", y, x, offset, get_line()->content_length);
+    move(t_y, t_x);
+    attroff(A_REVERSE);
+}
+
 void init_head_area(Page *page)
 {
     int t_x, t_y;
@@ -85,17 +98,6 @@ void init_head_area(Page *page)
     move(0, title_pos);
     attron(A_REVERSE);
     printw(page->doc_name);
-    move(t_y, t_x);
-    attroff(A_REVERSE);
-}
-
-void init_command_area()
-{
-    int t_x, t_y;
-    getyx(stdscr, t_y, t_x);
-    move(LINES - 1, 0);
-    attron(A_REVERSE);
-    printw("-- INSERT --");
     move(t_y, t_x);
     attroff(A_REVERSE);
 }
@@ -132,7 +134,12 @@ void init_editor(Page *page)
         case KEY_DOWN:
             mv_down();
             break;
-        case 27:
+        case 'C' - 64: // ctrl+c
+        case 27:       // ESC
+            save(get_page());
+            exit(0);
+            break;
+        case 'S' - 64: // ctrl+s
             save(get_page());
             break;
         default:
@@ -141,6 +148,7 @@ void init_editor(Page *page)
             break;
         }
         getyx(stdscr, y, x);
+        update_status();
 
 #if defined(_DEBUG_)
         debug_print(get_line());
@@ -164,14 +172,25 @@ void init(const char *name, const char *content)
 
     curs_set(0);
     long long len = strlen(content);
+    if (len == 0)
+    {
+        insert_char(get_line(), EOF);
+        int tmp = bpos_to_cpos(get_line(), get_line()->cursor_pos) % COLS;
+        if (tmp == 0)
+            tmp = COLS;
+        int cnt = COLS - tmp;
+        for (int j = 0; j <= cnt; j++)
+            insert_char(get_line(), INVALID);
+        goto load_end;
+    }
     for (long long i = 0; i < len; i++)
     {
         insert_char(get_line(), content[i]);
         if (content[i] == NEWLINE)
         {
             int tmp = bpos_to_cpos(get_line(), get_line()->cursor_pos) % COLS;
-            if(tmp == 0)
-                tmp = 120;
+            if (tmp == 0)
+                tmp = COLS;
             int cnt = COLS - tmp;
             // I don't know why it has to begin at 0, but it works well
             for (int j = 0; j <= cnt; j++)
@@ -181,16 +200,17 @@ void init(const char *name, const char *content)
         {
             insert_char(get_line(), EOF);
             int tmp = bpos_to_cpos(get_line(), get_line()->cursor_pos) % COLS;
-            if(tmp == 0)
-                tmp = 120;
+            if (tmp == 0)
+                tmp = COLS;
             int cnt = COLS - tmp;
             for (int j = 0; j <= cnt; j++)
                 insert_char(get_line(), INVALID);
         }
         loading((double)i / (double)len);
     }
+load_end:
     curs_set(1);
-    init_command_area();
+    update_status();
     offset = 0;
     move_to(get_line(), 1); // move to the front of the first character(NEWLINE flag)
     move(1, 0);
@@ -207,7 +227,7 @@ inline void print_page()
     getyx(stdscr, old_y, old_x);
     clear();
     init_head_area(get_page());
-    init_command_area();
+    update_status();
     move(1, 0);
     Line *line = get_line();
     for (int i = offset * COLS; i < line->buffer_length; i++)

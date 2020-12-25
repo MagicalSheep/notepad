@@ -8,13 +8,14 @@
 
 #define NEWLINE '\n'
 #define INVALID -2
-#define BUFFER_LENGTH 500000
+#define BUFFER_LENGTH 10
 
 typedef struct line
 {
     char *buffer;
     int gap_length;       // current gap length
     size_t buffer_length; // current buffer length
+    int content_length;   // the content length, exclude EOF, '\n' and INVALID
     int string_length;    // the content length, include EOF, '\n' and INVALID
     int cursor_pos;       // the current position of the gap(buffer position)
 } Line;
