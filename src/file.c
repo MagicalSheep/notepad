@@ -13,6 +13,7 @@
 #include <file.h>
 
 char *read_buffer;
+char *old_buffer;
 long long string_length;
 long long buffer_length;
 int _index;
@@ -70,12 +71,15 @@ int save(Page *page)
 
 void grow_read_buffer()
 {
-    char old_buffer[buffer_length];
-    memcpy(old_buffer, read_buffer, sizeof(read_buffer));
+    int old_length = buffer_length;
+    old_buffer = (char *)calloc(old_length, sizeof(char));
+    memcpy(old_buffer, read_buffer, old_length * sizeof(char));
+    free(read_buffer);
     read_buffer = (char *)calloc(buffer_length * 2, sizeof(char));
-    for (int i = 0; i < buffer_length; i++)
-        read_buffer[i] = old_buffer[i];
     buffer_length *= 2;
+    for (int i = 0; i < old_length; i++)
+        read_buffer[i] = old_buffer[i];
+    free(old_buffer);
 }
 
 void add_to_read_buffer(char ch)

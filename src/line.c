@@ -18,6 +18,8 @@
 
 #include <line.h>
 
+char *_old_buffer; // used to grow buffer
+
 void init_line(Line *line)
 {
     line->buffer = (char *)calloc(BUFFER_LENGTH, sizeof(char));
@@ -65,17 +67,19 @@ void move_to(Line *line, const int position)
 void grow(Line *line)
 {
     int old_length = line->buffer_length;
-    char old_buffer[old_length];
-    memcpy(old_buffer, line->buffer, old_length * sizeof(char));
+    _old_buffer = (char *)calloc(old_length, sizeof(char));
+    memcpy(_old_buffer, line->buffer, old_length * sizeof(char));
+    free(line->buffer);
     line->buffer = (char *)calloc(line->buffer_length + BUFFER_LENGTH, sizeof(char));
     line->buffer_length += BUFFER_LENGTH;
     line->gap_length = BUFFER_LENGTH;
     // copy the first part
     for (int i = 0; i < line->cursor_pos; i++)
-        line->buffer[i] = old_buffer[i];
+        line->buffer[i] = _old_buffer[i];
     // copy the second part
     for (int i = line->cursor_pos + BUFFER_LENGTH, j = line->cursor_pos; i < line->buffer_length; i++, j++)
-        line->buffer[i] = old_buffer[j];
+        line->buffer[i] = _old_buffer[j];
+    free(_old_buffer);
 }
 
 void insert_char(Line *line, const char ch)
