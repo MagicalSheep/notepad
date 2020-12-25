@@ -117,6 +117,14 @@ void remove_invalid(Line *line);
 int get_NEWLINE_pos(Line *line);
 
 /**
+ * Search string in the line from current cursor position
+ * @param line line
+ * @param str string to be searched
+ * @return the position(count position) of the first character of string, -1 if failed
+ */
+int search_string(Line *line, char *str);
+
+/**
  * Add INVALID flag to the end of current line(cursor point to)
  * @param line line
  */

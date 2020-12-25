@@ -151,6 +151,20 @@ int get_NEWLINE_pos(Line *line)
     }
 }
 
+int search_string(Line *line, char *str)
+{
+    // TODO: debug to be fixed
+    int t_pos = line->cursor_pos;
+    move_to(line, 1);
+    char *tmp = strstr(line->buffer + line->gap_length + t_pos, str);
+    if (tmp == NULL)
+        return -1;
+    int bpos = tmp - line->buffer;
+    int ret = bpos_to_cpos(line, bpos);
+    move_to(line, t_pos);
+    return ret;
+}
+
 int bpos_to_cpos(Line *line, int bpos)
 {
     if (bpos <= line->cursor_pos)

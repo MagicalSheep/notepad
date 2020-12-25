@@ -54,6 +54,7 @@ void debug_print(Line *line)
 }
 #endif
 
+void search();
 void print_page();
 void mv_return();
 void mv_backspace();
@@ -85,8 +86,20 @@ void update_status()
     clrtoeol();
     attron(A_REVERSE);
     printw("LINE = %d, COL = %d, offset = %d, length = %d", y, x, offset, get_line()->content_length);
-    move(t_y, t_x);
     attroff(A_REVERSE);
+    move(t_y, t_x);
+}
+
+void update_status_with_message(char *message)
+{
+    int t_x, t_y;
+    getyx(stdscr, t_y, t_x);
+    move(LINES - 1, 0);
+    clrtoeol();
+    attron(A_REVERSE);
+    printw(message);
+    attroff(A_REVERSE);
+    move(t_y, t_x);
 }
 
 void init_head_area(Page *page)
@@ -141,6 +154,9 @@ void init_editor(Page *page)
             break;
         case 'S' - 64: // ctrl+s
             save(get_page());
+            break;
+        case 'F' - 64: // ctrl+f
+            // search();
             break;
         default:
             mv_insert(operate);
@@ -219,6 +235,51 @@ load_end:
 
     init_editor(get_page());
     refresh();
+}
+
+inline void search()
+{
+    // TODO: wait to be developed
+    int t_y = y, t_x = x;
+    move(LINES - 1, 0);
+    clrtoeol();
+    char in = 0;
+    char words[COLS * 2];
+    int index = 0;
+    for (int i = 0;; i++)
+    {
+        in = getch();
+        if (in == '\r')
+        {
+            words[i] = '\0';
+            break;
+        }
+        addch(in);
+        refresh();
+        words[i] = in;
+    }
+    int pos = search_string(get_line(), words);
+    if (pos == -1)
+    {
+        update_status_with_message("Nothing is founded");
+        move(t_y, t_x);
+    }
+    else
+    {
+        // logical cursor move
+        move_to(get_line(), pos);
+        int lines = pos / COLS + 1;
+        if (pos % COLS == 0)
+            lines -= 1;
+        if (lines <= EDITOR_HEIGHT)
+            offset = 0;
+        else
+            offset = lines - EDITOR_HEIGHT;
+        get_cursor_pos(offset, pos, &t_y, &t_x);
+        move(t_y, t_x);
+        getyx(stdscr, y, x);
+        update_status();
+    }
 }
 
 inline void print_page()
