@@ -8,7 +8,7 @@
 
 #define NEWLINE '\n'
 #define INVALID -2
-#define BUFFER_LENGTH 10
+#define BUFFER_LENGTH 500000
 
 typedef struct line
 {

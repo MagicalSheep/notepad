@@ -14,6 +14,7 @@
  *  2020/12/23  MagicalSheep    Rebuild the control function.
  *  2020/12/24  MagicalSheep    Delete lines implementation.
  *  2020/12/24  MagicalSheep    Edit function completed.
+ *  2020/12/25  MagicalSheep    Optimization of opening file.
 *************************************************/
 
 #include <console.h>
@@ -165,11 +166,20 @@ void init(const char *name, const char *content)
     long long len = strlen(content);
     for (long long i = 0; i < len; i++)
     {
+        insert_char(get_line(), content[i]);
         if (content[i] == NEWLINE)
-            mv_return();
-        else
-            mv_insert(content[i]);
-        getyx(stdscr, y, x);
+        {
+            int cnt = COLS - bpos_to_cpos(get_line(), get_line()->cursor_pos) % COLS;
+            for (int j = 0; j <= cnt; j++)
+                insert_char(get_line(), INVALID);
+        }
+        if (i == len - 1)
+        {
+            insert_char(get_line(), EOF);
+            int cnt = COLS - bpos_to_cpos(get_line(), get_line()->cursor_pos) % COLS;
+            for (int j = 0; j <= cnt; j++)
+                insert_char(get_line(), INVALID);
+        }
         loading((double)i / (double)len);
     }
     curs_set(1);
