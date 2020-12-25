@@ -169,14 +169,21 @@ void init(const char *name, const char *content)
         insert_char(get_line(), content[i]);
         if (content[i] == NEWLINE)
         {
-            int cnt = COLS - bpos_to_cpos(get_line(), get_line()->cursor_pos) % COLS;
+            int tmp = bpos_to_cpos(get_line(), get_line()->cursor_pos) % COLS;
+            if(tmp == 0)
+                tmp = 120;
+            int cnt = COLS - tmp;
+            // I don't know why it has to begin at 0, but it works well
             for (int j = 0; j <= cnt; j++)
                 insert_char(get_line(), INVALID);
         }
         if (i == len - 1)
         {
             insert_char(get_line(), EOF);
-            int cnt = COLS - bpos_to_cpos(get_line(), get_line()->cursor_pos) % COLS;
+            int tmp = bpos_to_cpos(get_line(), get_line()->cursor_pos) % COLS;
+            if(tmp == 0)
+                tmp = 120;
+            int cnt = COLS - tmp;
             for (int j = 0; j <= cnt; j++)
                 insert_char(get_line(), INVALID);
         }
