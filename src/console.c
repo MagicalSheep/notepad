@@ -61,6 +61,20 @@ int mv_down();
 void mv_left();
 void mv_right();
 
+void loading(double progress)
+{
+    int t_y = y, t_x = x;
+    move(LINES - 1, 0);
+    attron(A_REVERSE);
+    // draw
+    int cnt = (int)COLS * progress;
+    for (int i = 1; i <= cnt; i++)
+        addch(' ');
+    attroff(A_REVERSE);
+    move(t_y, t_x);
+    refresh();
+}
+
 void init_head_area(Page *page)
 {
     int t_x, t_y;
@@ -144,16 +158,22 @@ void init(const char *name, const char *content)
 
     init_page(name, COLS, LINES);
     init_head_area(get_page());
-    init_command_area();
+    move(1, 0);
+    refresh();
 
-    for (int i = 0; i < strlen(content); i++)
+    curs_set(0);
+    long long len = strlen(content);
+    for (long long i = 0; i < len; i++)
     {
         if (content[i] == NEWLINE)
             mv_return();
         else
             mv_insert(content[i]);
         getyx(stdscr, y, x);
+        loading((double)i / (double)len);
     }
+    curs_set(1);
+    init_command_area();
     offset = 0;
     move_to(get_line(), 1); // move to the front of the first character(NEWLINE flag)
     move(1, 0);
