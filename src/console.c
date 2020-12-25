@@ -16,6 +16,7 @@
  *  2020/12/24  MagicalSheep    Edit function completed.
  *  2020/12/25  MagicalSheep    Optimization of opening file.
  *  2020/12/25  MagicalSheep    Add status area.
+ *  2020/12/25  MagicalSheep    Support linux.
 *************************************************/
 
 #include <console.h>
@@ -128,10 +129,12 @@ void init_editor(Page *page)
         operate = getch();
         switch (operate)
         {
+        case '\n': // return in linux
         case '\r': // return
             mv_return();
             print_page();
             break;
+        case 127:  // delete (backspace in linux)
         case '\b': // backspace
             mv_backspace();
             break;
@@ -150,6 +153,7 @@ void init_editor(Page *page)
         case 'C' - 64: // ctrl+c
         case 27:       // ESC
             save(get_page());
+            endwin();
             exit(0);
             break;
         case 'S' - 64: // ctrl+s

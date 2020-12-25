@@ -17,7 +17,10 @@ if(WIN32 OR MSVC)
                 PRIVATE
                 PDcurses
         )
-else()
+else(UNIX)
+        find_package(Curses REQUIRED)
+        include_directories(${CURSES_INCLUDE_DIRS})
+        target_link_libraries(Notepad ${CURSES_LIBRARIES})
         # find ncurses and use that
 endif()
 
