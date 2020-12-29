@@ -178,7 +178,7 @@ void init_editor(Page *page)
     }
 }
 
-void init(const char *name, const char *content)
+void init(const char *name, const wchar_t *content)
 {
     initscr();
     raw();
@@ -191,10 +191,10 @@ void init(const char *name, const char *content)
     refresh();
 
     curs_set(0);
-    long long len = strlen(content);
+    size_t len = wcslen(content);
     if (len == 0)
     {
-        insert_char(get_line(), EOF);
+        insert_char(get_line(), END);
         int tmp = bpos_to_cpos(get_line(), get_line()->cursor_pos) % COLS;
         if (tmp == 0)
             tmp = COLS;
@@ -218,7 +218,7 @@ void init(const char *name, const char *content)
         }
         if (i == len - 1)
         {
-            insert_char(get_line(), EOF);
+            insert_char(get_line(), END);
             int tmp = bpos_to_cpos(get_line(), get_line()->cursor_pos) % COLS;
             if (tmp == 0)
                 tmp = COLS;
@@ -301,14 +301,15 @@ inline void print_page()
             break;
         if (line->buffer[i] == INVALID || line->buffer[i] == 0)
             continue;
-        if (line->buffer[i] == EOF)
+        if (line->buffer[i] == END)
             break;
         if (line->buffer[i] == NEWLINE)
         {
             printw("\n");
             continue;
         }
-        printw("%c", line->buffer[i]);
+        if (line->buffer[i])
+            addnwstr(line->buffer + i, 1);
     }
     move(old_y, old_x);
 }

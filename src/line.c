@@ -18,11 +18,11 @@
 
 #include <line.h>
 
-char *_old_buffer; // used to grow buffer
+wchar_t *_old_buffer; // used to grow buffer
 
 void init_line(Line *line)
 {
-    line->buffer = (char *)calloc(BUFFER_LENGTH, sizeof(char));
+    line->buffer = (wchar_t *)calloc(BUFFER_LENGTH, sizeof(wchar_t));
     line->gap_length = BUFFER_LENGTH;
     line->buffer_length = BUFFER_LENGTH;
     line->cursor_pos = 0;
@@ -67,10 +67,10 @@ void move_to(Line *line, const int position)
 void grow(Line *line)
 {
     int old_length = line->buffer_length;
-    _old_buffer = (char *)calloc(old_length, sizeof(char));
-    memcpy(_old_buffer, line->buffer, old_length * sizeof(char));
+    _old_buffer = (wchar_t *)calloc(old_length, sizeof(wchar_t));
+    memcpy(_old_buffer, line->buffer, old_length * sizeof(wchar_t));
     free(line->buffer);
-    line->buffer = (char *)calloc(line->buffer_length + BUFFER_LENGTH, sizeof(char));
+    line->buffer = (wchar_t *)calloc(line->buffer_length + BUFFER_LENGTH, sizeof(wchar_t));
     line->buffer_length += BUFFER_LENGTH;
     line->gap_length = BUFFER_LENGTH;
     // copy the first part
@@ -82,21 +82,21 @@ void grow(Line *line)
     free(_old_buffer);
 }
 
-void insert_char(Line *line, const char ch)
+void insert_char(Line *line, const wchar_t ch)
 {
     line->buffer[line->cursor_pos] = ch;
     line->cursor_pos++;
     line->gap_length--;
     line->string_length++;
-    if (ch != EOF && ch != NEWLINE && ch != INVALID)
+    if (ch != END && ch != NEWLINE && ch != INVALID)
         line->content_length++;
     if (line->gap_length == 0)
         grow(line);
 }
 
-void insert_str(Line *line, const char *str)
+void insert_str(Line *line, const wchar_t *str)
 {
-    for (int i = 0; i < (int)strlen(str); i++)
+    for (int i = 0; i < (int)wcslen(str); i++)
         insert_char(line, str[i]);
 }
 
@@ -104,8 +104,8 @@ void delete_char(Line *line)
 {
     move_right(line);
     line->cursor_pos--;
-    char ch = line->buffer[line->cursor_pos];
-    if (ch != EOF && ch != NEWLINE && ch != INVALID)
+    wchar_t ch = line->buffer[line->cursor_pos];
+    if (ch != END && ch != NEWLINE && ch != INVALID)
         line->content_length--;
     line->buffer[line->cursor_pos] = 0;
     line->gap_length++;
@@ -150,7 +150,7 @@ int get_NEWLINE_pos(Line *line)
     for (int i = line->cursor_pos;; i++)
     {
         // new line signal include NEWLINE and EOF
-        if (line->buffer[i] == NEWLINE || line->buffer[i] == EOF)
+        if (line->buffer[i] == NEWLINE || line->buffer[i] == END)
             return bpos_to_cpos(line, i);
     }
 }
@@ -158,15 +158,15 @@ int get_NEWLINE_pos(Line *line)
 int search_string(Line *line, char *str)
 {
     // TODO: debug to be fixed
-    int t_pos = line->cursor_pos;
-    move_to(line, 1);
-    char *tmp = strstr(line->buffer + line->gap_length + t_pos, str);
-    if (tmp == NULL)
-        return -1;
-    int bpos = tmp - line->buffer;
-    int ret = bpos_to_cpos(line, bpos);
-    move_to(line, t_pos);
-    return ret;
+    // int t_pos = line->cursor_pos;
+    // move_to(line, 1);
+    // char *tmp = strstr(line->buffer + line->gap_length + t_pos, str);
+    // if (tmp == NULL)
+    //     return -1;
+    // int bpos = tmp - line->buffer;
+    // int ret = bpos_to_cpos(line, bpos);
+    // move_to(line, t_pos);
+    // return ret;
 }
 
 int bpos_to_cpos(Line *line, int bpos)

@@ -1,9 +1,11 @@
 #include <console.h>
 #include <file.h>
+#include <locale.h>
 
 int main(int argc, char *argv[])
 {
-    char *content;
+    setlocale(LC_ALL, "");
+    wchar_t *content;
     char *name;
     if (argc == 1)
     {

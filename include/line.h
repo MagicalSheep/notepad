@@ -5,14 +5,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
 
 #define NEWLINE '\n'
-#define INVALID -2
+#define INVALID 65534
+#define END WEOF
 #define BUFFER_LENGTH 500000
 
 typedef struct line
 {
-    char *buffer;
+    wchar_t *buffer;
     int gap_length;       // current gap length
     size_t buffer_length; // current buffer length
     int content_length;   // the content length, exclude EOF, '\n' and INVALID
@@ -71,14 +73,14 @@ void grow(Line *line);
  * @param line line
  * @param ch character to be inserted
  */
-void insert_char(Line *line, const char ch);
+void insert_char(Line *line, const wchar_t ch);
 
 /**
  * Insert a string to the current cursor position
  * @param line line
  * @param str string to be inserted
  */
-void insert_str(Line *line, const char *str);
+void insert_str(Line *line, const wchar_t *str);
 
 /**
  * Delete a character at front of the positon of current cursor position

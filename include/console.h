@@ -15,6 +15,6 @@
  * @param name document name
  * @param content document content
  */
-void init(const char *name, const char *content);
+void init(const char *name, const wchar_t *content);
 
 #endif

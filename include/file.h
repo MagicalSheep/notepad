@@ -12,7 +12,7 @@
  * Open page from the file
  * @param path file path
  */
-char *open(const char *path);
+wchar_t *open(const char *path);
 
 /**
  * Save page to the file
