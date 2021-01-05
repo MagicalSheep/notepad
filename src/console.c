@@ -308,8 +308,7 @@ inline void print_page()
             printw("\n");
             continue;
         }
-        if (line->buffer[i])
-            addnwstr(line->buffer + i, 1);
+        addch(line->buffer[i]);
     }
     move(old_y, old_x);
 }

@@ -4,9 +4,6 @@
 
 #ifndef __PDCURSES__
 #define __PDCURSES__ 1
-#ifndef PDC_WIDE
-#define PDC_WIDE
-#endif
 
 /*man-start**************************************************************
 

@@ -12,7 +12,7 @@ aux_source_directory(./src DIR_SRCS)
 add_executable(Notepad main.c ${DIR_SRCS})
 
 if(WIN32 OR MSVC)
-        add_compile_options(-DPDC_WIDE)
+        add_definitions(-DPDC_WIDE)
         add_subdirectory(./include/pdcurses)
         target_link_libraries(Notepad
                 PRIVATE
