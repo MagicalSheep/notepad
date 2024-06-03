@@ -55,7 +55,7 @@ C语言课程设计作业
 
 ## 运行截图
 
-![](https://magicalsheep.cn/2020-12-25/notepad.png "运行截图")
+![](https://magicalsheep.cn/assets/imgs/2020-12-25/notepad.png "运行截图")
 
 ## 原理
 
